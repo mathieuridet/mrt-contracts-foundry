@@ -108,6 +108,12 @@ contract MRTNFTokenTest is Test {
         );
     }
 
+    // Allow the test contract to receive ETH
+    receive() external payable {}
+
+    // Fallback function to accept ETH
+    fallback() external payable {}
+
     function test_withdraw() public {
         skip(MINT_INTERVAL);
 
