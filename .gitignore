@@ -1,6 +1,6 @@
 # Compiler files
-cache/
-out/
+/backend/cache/
+/backend/out/
 
 # Ignores development broadcast logs
 !/broadcast
@@ -12,3 +12,9 @@ docs/
 
 # Dotenv file
 .env
+
+.DS_Store
+.vscode
+.prettierignore
+.prettierrc.json
+.solhint.json
