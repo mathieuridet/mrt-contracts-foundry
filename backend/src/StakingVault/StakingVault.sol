@@ -11,8 +11,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 /// @notice Single-sided staking vault paying rewards in the same ERC20 token
 /// @dev Fund this contract with reward tokens and set rewardRate tokens/sec
 contract StakingVault is Ownable, ReentrancyGuard {
-    using SafeERC20 for IERC20;
-
+    // Errors
     /// @notice Error thrown when amount is zero
     error StakingVault__AmountZero();
 
@@ -22,6 +21,10 @@ contract StakingVault is Ownable, ReentrancyGuard {
     /// @notice Error thrown when attempting to rescue the staking token
     error StakingVault__NoStakingToken();
 
+    // Type declarations
+    using SafeERC20 for IERC20;
+
+    // State variables
     /// @notice ERC20 token used for both staking and rewards
     IERC20 public immutable STAKING_TOKEN;
 
@@ -46,6 +49,7 @@ contract StakingVault is Ownable, ReentrancyGuard {
     /// @notice Mapping of user address to their pending rewards
     mapping(address => uint256) public rewards;
 
+    // Events
     /// @notice Emitted when a user stakes tokens
     /// @param user Address that staked
     /// @param amount Amount staked
@@ -65,6 +69,15 @@ contract StakingVault is Ownable, ReentrancyGuard {
     /// @param rewardRate New reward rate in tokens per second
     event RewardRateSet(uint256 rewardRate);
 
+    // Modifiers
+    /// @notice Modifier that updates rewards for an account before executing a function
+    /// @param account Address to update rewards for
+    modifier updateReward(address account) {
+        _updateReward(account);
+        _;
+    }
+
+    // Functions
     /// @notice Constructs the StakingVault contract
     /// @param initialOwner Address that will own the contract
     /// @param _token ERC20 token used for staking and rewards
@@ -73,39 +86,6 @@ contract StakingVault is Ownable, ReentrancyGuard {
         STAKING_TOKEN = _token;
         rewardRate = _rewardRate;
         lastUpdateTime = block.timestamp;
-    }
-
-    /// @notice Modifier that updates rewards for an account before executing a function
-    /// @param account Address to update rewards for
-    modifier updateReward(address account) {
-        _updateReward(account);
-        _;
-    }
-
-    /// @notice Internal function to update rewards for an account
-    /// @param account Address to update rewards for
-    function _updateReward(address account) internal {
-        rewardPerTokenStored = rewardPerToken();
-        lastUpdateTime = block.timestamp;
-        if (account != address(0)) {
-            rewards[account] = earned(account);
-            userRewardPerTokenPaid[account] = rewardPerTokenStored;
-        }
-    }
-
-    /// @notice Calculates the current reward per token
-    /// @return Current reward per token (scaled by 1e18)
-    function rewardPerToken() public view returns (uint256) {
-        if (totalSupply == 0) return rewardPerTokenStored;
-        uint256 delta = block.timestamp - lastUpdateTime;
-        return rewardPerTokenStored + (delta * rewardRate * 1e18) / totalSupply;
-    }
-
-    /// @notice Calculates the total rewards earned by an account
-    /// @param account Address to check rewards for
-    /// @return Total rewards earned (including pending)
-    function earned(address account) public view returns (uint256) {
-        return (balanceOf[account] * (rewardPerToken() - userRewardPerTokenPaid[account])) / 1e18 + rewards[account];
     }
 
     /// @notice Updates the reward rate (tokens per second)
@@ -161,9 +141,35 @@ contract StakingVault is Ownable, ReentrancyGuard {
         token.safeTransfer(to, amount);
     }
 
+    /// @notice Internal function to update rewards for an account
+    /// @param account Address to update rewards for
+    function _updateReward(address account) internal {
+        rewardPerTokenStored = rewardPerToken();
+        lastUpdateTime = block.timestamp;
+        if (account != address(0)) {
+            rewards[account] = earned(account);
+            userRewardPerTokenPaid[account] = rewardPerTokenStored;
+        }
+    }
+
     /// @notice Manually triggers reward update for the caller
     /// @dev This function only triggers the updateReward modifier
     function updateRewardsOnly() external updateReward(msg.sender) {
         // This function only triggers the updateReward modifier
+    }
+
+    /// @notice Calculates the current reward per token
+    /// @return Current reward per token (scaled by 1e18)
+    function rewardPerToken() public view returns (uint256) {
+        if (totalSupply == 0) return rewardPerTokenStored;
+        uint256 delta = block.timestamp - lastUpdateTime;
+        return rewardPerTokenStored + (delta * rewardRate * 1e18) / totalSupply;
+    }
+
+    /// @notice Calculates the total rewards earned by an account
+    /// @param account Address to check rewards for
+    /// @return Total rewards earned (including pending)
+    function earned(address account) public view returns (uint256) {
+        return (balanceOf[account] * (rewardPerToken() - userRewardPerTokenPaid[account])) / 1e18 + rewards[account];
     }
 }

@@ -12,35 +12,36 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 /// @notice ERC721 NFT token with minting, royalties, and cooldown protection
 /// @dev Implements sequential token ID minting with a minting cooldown period per address
 contract MRTNFToken is ERC721Royalty, Ownable, ReentrancyGuard, Pausable {
-    /// @notice Minimum time between mints for a single address
-    uint256 public constant MINT_INTERVAL = 1 hours;
-
     /// @notice Error thrown when max supply is set to zero
     error MRTNFToken__MaxSupplyZero();
-    
+
     /// @notice Error thrown when base URI is empty
     error MRTNFToken__BaseURIEmpty();
-    
+
     /// @notice Error thrown when royalty receiver address is zero
     error MRTNFToken__RoyaltyReceiverZero();
-    
+
     /// @notice Error thrown when royalty basis points is zero
     error MRTNFToken__RoyaltyBpsZero();
-    
+
     /// @notice Error thrown when mint quantity is zero
     error MRTNFToken__QTYZero();
-    
+
     /// @notice Error thrown when minting would exceed max supply
     error MRTNFToken__MaxSupplyExceeded();
-    
+
     /// @notice Error thrown when insufficient ETH is sent for minting
     error MRTNFToken__InsufficientETH();
-    
+
     /// @notice Error thrown when minting is attempted before cooldown period expires
     error MRTNFToken__MintTooSoon();
-    
+
     /// @notice Error thrown when withdrawal fails
     error MRTNFToken__WithdrawFailed();
+
+    // State variables
+    /// @notice Minimum time between mints for a single address
+    uint256 public constant MINT_INTERVAL = 1 hours;
 
     /// @notice Maximum number of NFTs that can be minted
     uint256 public immutable MAX_SUPPLY;
@@ -57,6 +58,7 @@ contract MRTNFToken is ERC721Royalty, Ownable, ReentrancyGuard, Pausable {
     /// @notice Next available token ID (starts at 1)
     uint256 private nextAvailableTokenId = 1;
 
+    // Functions
     /// @notice Constructs the MRTNFToken contract
     /// @param initialOwner Address that will own the contract
     /// @param baseURI Base URI for token metadata
@@ -148,16 +150,16 @@ contract MRTNFToken is ERC721Royalty, Ownable, ReentrancyGuard, Pausable {
         active ? _unpause() : _pause();
     }
 
-    /// @notice Returns the total number of tokens minted
-    /// @return Total supply of tokens
-    function totalSupply() public view returns (uint256) {
-        return nextAvailableTokenId - 1;
-    }
-
     /// @notice Returns the base URI for token metadata
     /// @return Base URI string
     function _baseURI() internal view override returns (string memory) {
         return baseTokenURI;
+    }
+
+    /// @notice Returns the total number of tokens minted
+    /// @return Total supply of tokens
+    function totalSupply() public view returns (uint256) {
+        return nextAvailableTokenId - 1;
     }
 
     /// @notice Returns the URI for a given token ID, appending ".json" to the base URI

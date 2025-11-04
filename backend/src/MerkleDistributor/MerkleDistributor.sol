@@ -8,19 +8,9 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 /// @title MerkleDistributor
 /// @author Mathieu Ridet
 /// @notice One-time token claims for an allowlist using a Merkle root
+/// @dev Leaf = keccak256(abi.encodePacked(account, amount, round))
 contract MerkleDistributor is Ownable {
-    /// @notice ERC20 token being distributed
-    IERC20 public immutable TOKEN;
-
-    /// @notice Fixed reward amount per claim
-    uint256 public immutable REWARD_AMOUNT;
-
-    /// @notice Current Merkle root for claim verification
-    bytes32 public merkleRoot;
-
-    /// @notice Current distribution round
-    uint64 public round;
-
+    // Errors
     /// @notice Error thrown when root is set to zero
     error MerkleDistributor__RootZero();
 
@@ -42,9 +32,23 @@ contract MerkleDistributor is Ownable {
     /// @notice Error thrown when token transfer fails
     error MerkleDistributor__TransferFailed();
 
+    // State variables
+    /// @notice ERC20 token being distributed
+    IERC20 public immutable TOKEN;
+
+    /// @notice Fixed reward amount per claim
+    uint256 public immutable REWARD_AMOUNT;
+
+    /// @notice Current Merkle root for claim verification
+    bytes32 public merkleRoot;
+
+    /// @notice Current distribution round
+    uint64 public round;
+
     /// @notice Mapping of round => address => claimed status
     mapping(uint64 => mapping(address => bool)) private claimed;
 
+    // Events
     /// @notice Emitted when a new root and round are set
     /// @param newRoot New Merkle root
     /// @param newRound New round number
@@ -56,6 +60,7 @@ contract MerkleDistributor is Ownable {
     /// @param amount Amount claimed
     event Claimed(uint64 indexed round, address indexed account, uint256 amount);
 
+    // Functions
     /// @notice Constructs the MerkleDistributor contract
     /// @param initialOwner Address that will own the contract
     /// @param _token ERC20 token to distribute
@@ -75,14 +80,6 @@ contract MerkleDistributor is Ownable {
         merkleRoot = newRoot;
         round = newRound;
         emit RootUpdated(newRoot, newRound);
-    }
-
-    /// @notice Checks if an address has claimed for a specific round
-    /// @param r Round number to check
-    /// @param a Address to check
-    /// @return True if the address has claimed for this round
-    function isClaimed(uint64 r, address a) public view returns (bool) {
-        return claimed[r][a];
     }
 
     /// @notice Claims tokens for an address using a Merkle proof
@@ -109,5 +106,13 @@ contract MerkleDistributor is Ownable {
     /// @param amount Amount of tokens to rescue
     function rescue(address to, uint256 amount) external onlyOwner {
         require(TOKEN.transfer(to, amount), MerkleDistributor__TransferFailed());
+    }
+
+    /// @notice Checks if an address has claimed for a specific round
+    /// @param r Round number to check
+    /// @param a Address to check
+    /// @return True if the address has claimed for this round
+    function isClaimed(uint64 r, address a) public view returns (bool) {
+        return claimed[r][a];
     }
 }
