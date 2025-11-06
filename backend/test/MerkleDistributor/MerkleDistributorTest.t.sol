@@ -2,12 +2,16 @@
 pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
-import {MerkleDistributor} from "../src/MerkleDistributor/MerkleDistributor.sol";
-import {MockERC20} from "./TestHelper.sol";
+import {MerkleDistributorV1} from "src/MerkleDistributor/MerkleDistributorV1.sol";
+import {MockERC20} from "../TestHelper.sol";
+import {UUPSProxy} from "src/UUPSProxy.sol";
 
 contract MerkleDistributorTest is Test {
 
-    MerkleDistributor public distributor;
+    MerkleDistributorV1 public distributor;
+    UUPSProxy public proxy;
+    address public proxyAddress;
+
     MockERC20 public token;
 
     bytes32 public merkleRoot;
@@ -21,29 +25,37 @@ contract MerkleDistributorTest is Test {
         // Mint tokens to the test contract
         token.mint(address(this), 1_000e18);
 
-        // Deploy the MerkleDistributor contract
-        distributor = new MerkleDistributor(address(this), token, rewardAmount);
+        // Deploy the MerkleDistributorV1 contract
+        distributor = new MerkleDistributorV1(token, rewardAmount);
 
         // Approve the distributor to spend tokens
         token.approve(address(distributor), type(uint256).max);
 
         // Set the owner
         owner = address(this);
+
+        bytes memory initData = abi.encodeCall(MerkleDistributorV1.initialize, (owner));
+        proxy = new UUPSProxy(address(distributor), initData);
+        proxyAddress = address(proxy);
     }
 
     function test_setRoot() public {
+        MerkleDistributorV1 instance = MerkleDistributorV1(proxyAddress);
+
         bytes32 newRoot = keccak256(abi.encodePacked("test"));
         uint64 newRound = 1;
 
         // Set the Merkle root
-        distributor.setRoot(newRoot, newRound);
+        instance.setRoot(newRoot, newRound);
 
         // Assert that the Merkle root and round are updated
-        assertEq(distributor.merkleRoot(), newRoot, "Merkle root should be updated");
-        assertEq(distributor.round(), newRound, "Round should be updated");
+        assertEq(instance.s_merkleRoot(), newRoot, "Merkle root should be updated");
+        assertEq(instance.s_round(), newRound, "Round should be updated");
     }
 
     function test_claim() public {
+        MerkleDistributorV1 instance = MerkleDistributorV1(proxyAddress);
+
         // Set up the Merkle tree
         address account = address(0x123);
         uint64 round = 1;
@@ -58,26 +70,28 @@ contract MerkleDistributorTest is Test {
 
         // Generate the Merkle root
         bytes32 root = computeMerkleRoot(leaves);
-        distributor.setRoot(root, round);
+        instance.setRoot(root, round);
 
         // Generate the proof (empty for a single leaf)
         bytes32[] memory proof = new bytes32[](0);
 
         // Mint tokens to the distributor
-        token.mint(address(distributor), amount);
+        token.mint(address(instance), amount);
 
         // Claim the reward
         vm.prank(account);
-        distributor.claim(round, account, amount, proof);
+        instance.claim(round, account, amount, proof);
 
         // Assert that the reward was transferred
         assertEq(token.balanceOf(account), amount, "Account should receive the reward");
 
         // Assert that the claim is marked as claimed
-        assertTrue(distributor.isClaimed(round, account), "Claim should be marked as claimed");
+        assertTrue(instance.isClaimed(round, account), "Claim should be marked as claimed");
     }
 
     function test_preventDoubleClaim() public {
+        MerkleDistributorV1 instance = MerkleDistributorV1(proxyAddress);
+
         // Set up the Merkle tree
         address account = address(0x123);
         uint64 round = 1;
@@ -92,53 +106,57 @@ contract MerkleDistributorTest is Test {
 
         // Generate the Merkle root
         bytes32 root = computeMerkleRoot(leaves);
-        distributor.setRoot(root, round);
+        instance.setRoot(root, round);
 
         // Generate the proof (empty for a single leaf)
         bytes32[] memory proof = new bytes32[](0);
 
         // Mint tokens to the distributor
-        token.mint(address(distributor), amount);
+        token.mint(address(instance), amount);
 
         // Claim the reward
         vm.prank(account);
-        distributor.claim(round, account, rewardAmount, proof);
+        instance.claim(round, account, rewardAmount, proof);
 
         // Attempt to claim again
         vm.prank(account);
-        vm.expectRevert(MerkleDistributor.MerkleDistributor__AlreadyClaimed.selector);
-        distributor.claim(round, account, rewardAmount, proof);
+        vm.expectRevert(MerkleDistributorV1.MerkleDistributor__AlreadyClaimed.selector);
+        instance.claim(round, account, rewardAmount, proof);
     }
 
     function test_invalidProof() public {
+        MerkleDistributorV1 instance = MerkleDistributorV1(proxyAddress);
+
         // Set up the Merkle tree
         address account = address(0x123);
         uint64 round = 1;
         bytes32 leaf = keccak256(abi.encodePacked(account, rewardAmount, round));
         merkleRoot = keccak256(abi.encodePacked(leaf));
-        distributor.setRoot(merkleRoot, round);
+        instance.setRoot(merkleRoot, round);
 
         // Mint tokens to the distributor
-        token.mint(address(distributor), rewardAmount);
+        token.mint(address(instance), rewardAmount);
 
         // Attempt to claim with an invalid proof
         bytes32[] memory invalidProof = new bytes32[](1);
         invalidProof[0] = keccak256(abi.encodePacked("invalid"));
         vm.prank(account);
-        vm.expectRevert(MerkleDistributor.MerkleDistributor__BadProof.selector);
-        distributor.claim(round, account, rewardAmount, invalidProof);
+        vm.expectRevert(MerkleDistributorV1.MerkleDistributor__BadProof.selector);
+        instance.claim(round, account, rewardAmount, invalidProof);
     }
 
     function test_rescue() public {
+        MerkleDistributorV1 instance = MerkleDistributorV1(proxyAddress);
+
         // Mint tokens to the distributor
         uint256 rescueAmount = 500e18;
-        token.mint(address(distributor), rescueAmount);
+        token.mint(address(instance), rescueAmount);
 
         // Get the owner's initial balance
         uint256 initialBalance = token.balanceOf(address(this));
 
         // Rescue the tokens
-        distributor.rescue(address(this), rescueAmount);
+        instance.rescue(address(this), rescueAmount);
 
         // Assert that the tokens were transferred to the owner
         assertEq(
@@ -147,18 +165,20 @@ contract MerkleDistributorTest is Test {
     }
 
     function test_onlyOwnerCanRescue() public {
+        MerkleDistributorV1 instance = MerkleDistributorV1(proxyAddress);
+
         // Mint tokens to the distributor
         uint256 rescueAmount = 500e18;
-        token.mint(address(distributor), rescueAmount);
+        token.mint(address(instance), rescueAmount);
 
         // Attempt to rescue tokens as a non-owner
         address nonOwner = address(0x456);
         vm.prank(nonOwner);
         vm.expectRevert();
-        distributor.rescue(nonOwner, rescueAmount);
+        instance.rescue(nonOwner, rescueAmount);
     }
 
-    function computeMerkleRoot(bytes32[] memory leaves) internal pure returns (bytes32) {
+    function computeMerkleRoot(bytes32[] memory leaves) internal pure returns (bytes32) {        
         require(leaves.length > 0, "NO_LEAVES");
 
         while (leaves.length > 1) {

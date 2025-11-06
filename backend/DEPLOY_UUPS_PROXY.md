@@ -26,17 +26,17 @@ forge script script/poc-uups-proxy/DeployScript.s.sol:DeployScript --rpc-url htt
 
 ### 3. Store proxy address
 ```bash
-export PROXY_ADDRESS=<proxy_address>
+export PROXY_ADDRESS=0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0
 ```
 
 ### 4. Upgrade Script
 ```bash
-forge script script/poc-uups-proxy/DeployScript.s.sol:DeployScript --rpc-url http://localhost:8545 --broadcast -vvvv
+forge script script/poc-uups-proxy/UpgradeScript.s.sol:UpgradeScript --rpc-url http://localhost:8545 --broadcast -vvvv
 ```
 
 # Interact with proxy
 ```bash
-cast call 0x5fc8d32690cc91d4c39d9d3abcbd16989f875707 "myNumber()" --rpc-url http://127.0.0.1:8545
+cast call 0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0 "REWARD_AMOUNT()" --rpc-url http://127.0.0.1:8545
 ```
 
 ## Testing on Sepolia (Testnet)

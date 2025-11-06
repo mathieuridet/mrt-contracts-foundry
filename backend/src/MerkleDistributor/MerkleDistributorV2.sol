@@ -3,13 +3,13 @@ pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {UUPSProxy} from "src/UUPSProxy.sol";
 
-/// @title MerkleDistributor
-/// @author Mathieu Ridet
-/// @notice One-time token claims for an allowlist using a Merkle root
-/// @dev Leaf = keccak256(abi.encodePacked(account, amount, round))
-contract MerkleDistributor is Ownable {
+/// @title MerkleDistributor V2 (only for proxy testing)
+contract MerkleDistributorV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     // Errors
     /// @notice Error thrown when root is set to zero
     error MerkleDistributor__RootZero();
@@ -17,7 +17,7 @@ contract MerkleDistributor is Ownable {
     /// @notice Error thrown when attempting to set a round backwards
     error MerkleDistributor__RoundBackwards();
 
-    /// @notice Error thrown when claim amount doesn't match REWARD_AMOUNT
+    /// @notice Error thrown when claim amount doesn't match i_rewardAmount
     error MerkleDistributor__WrongAmount();
 
     /// @notice Error thrown when address has already claimed for this round
@@ -34,19 +34,24 @@ contract MerkleDistributor is Ownable {
 
     // State variables
     /// @notice ERC20 token being distributed
-    IERC20 public immutable TOKEN;
+    IERC20 public immutable i_token;
 
     /// @notice Fixed reward amount per claim
-    uint256 public immutable REWARD_AMOUNT;
+    uint256 public immutable i_rewardAmount;
 
     /// @notice Current Merkle root for claim verification
-    bytes32 public merkleRoot;
+    bytes32 public s_merkleRoot;
 
     /// @notice Current distribution round
-    uint64 public round;
+    uint64 public s_round;
 
     /// @notice Mapping of round => address => claimed status
     mapping(uint64 => mapping(address => bool)) private claimed;
+
+    uint8 public s_addStorageVarTest;
+
+    /// @notice Useful to add state variables in new versions of the contract
+    uint256[49] private __gap;
 
     // Events
     /// @notice Emitted when a new root and round are set
@@ -62,13 +67,22 @@ contract MerkleDistributor is Ownable {
 
     // Functions
     /// @notice Constructs the MerkleDistributor contract
-    /// @param initialOwner Address that will own the contract
     /// @param _token ERC20 token to distribute
     /// @param _rewardAmount Fixed reward amount per claim
-    constructor(address initialOwner, IERC20 _token, uint256 _rewardAmount) Ownable(initialOwner) {
-        TOKEN = _token;
-        REWARD_AMOUNT = _rewardAmount;
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor(IERC20 _token, uint256 _rewardAmount) {
+        _disableInitializers();
+
+        i_token = _token;
+        i_rewardAmount = _rewardAmount;
     }
+
+    /// @notice new initializer for upgrade v1 -> v2
+    function initializeV2() public reinitializer(2) {
+        s_addStorageVarTest = 4;
+    }
+
+    function _authorizeUpgrade(address _newImplementation) internal override onlyOwner {}
 
     /// @notice Sets a new Merkle root and round for claims
     /// @param newRoot New Merkle root for claim verification
@@ -76,28 +90,28 @@ contract MerkleDistributor is Ownable {
     /// @dev Allows updating multiple times within the same round
     function setRoot(bytes32 newRoot, uint64 newRound) external onlyOwner {
         require(newRoot != bytes32(0), MerkleDistributor__RootZero());
-        require(newRound >= round, MerkleDistributor__RoundBackwards());
-        merkleRoot = newRoot;
-        round = newRound;
+        require(newRound >= s_round, MerkleDistributor__RoundBackwards());
+        s_merkleRoot = newRoot;
+        s_round = newRound;
         emit RootUpdated(newRoot, newRound);
     }
 
     /// @notice Claims tokens for an address using a Merkle proof
     /// @param r Round number to claim for
     /// @param account Address claiming the reward
-    /// @param amount Amount to claim (must equal REWARD_AMOUNT)
+    /// @param amount Amount to claim (must equal i_rewardAmount)
     /// @param merkleProof Merkle proof to verify the claim
     /// @dev Can only claim once per round per address
     function claim(uint64 r, address account, uint256 amount, bytes32[] calldata merkleProof) external {
-        require(r == round, MerkleDistributor__WrongRound());
-        require(amount == REWARD_AMOUNT, MerkleDistributor__WrongAmount());
+        require(r == s_round, MerkleDistributor__WrongRound());
+        require(amount == i_rewardAmount, MerkleDistributor__WrongAmount());
         require(!claimed[r][account], MerkleDistributor__AlreadyClaimed());
 
         bytes32 leaf = keccak256(abi.encodePacked(account, amount, r));
-        require(MerkleProof.verify(merkleProof, merkleRoot, leaf), MerkleDistributor__BadProof());
+        require(MerkleProof.verify(merkleProof, s_merkleRoot, leaf), MerkleDistributor__BadProof());
 
         claimed[r][account] = true;
-        require(TOKEN.transfer(account, amount), MerkleDistributor__TransferFailed());
+        require(i_token.transfer(account, amount), MerkleDistributor__TransferFailed());
         emit Claimed(r, account, amount);
     }
 
@@ -105,7 +119,7 @@ contract MerkleDistributor is Ownable {
     /// @param to Address to receive the rescued tokens
     /// @param amount Amount of tokens to rescue
     function rescue(address to, uint256 amount) external onlyOwner {
-        require(TOKEN.transfer(to, amount), MerkleDistributor__TransferFailed());
+        require(i_token.transfer(to, amount), MerkleDistributor__TransferFailed());
     }
 
     /// @notice Checks if an address has claimed for a specific round
