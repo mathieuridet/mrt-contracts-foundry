@@ -21,22 +21,22 @@ anvil
 export PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
 # Run the script
-forge script script/poc-uups-proxy/DeployScript.s.sol:DeployScript --rpc-url http://localhost:8545 --broadcast -vvvv
+forge script script/MRToken.s.sol:DeployScript --rpc-url http://localhost:8545 --broadcast -vvvv
 ```
 
 ### 3. Store proxy address
 ```bash
-export PROXY_ADDRESS=0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0
+export PROXY_ADDRESS=0xa513e6e4b8f2a923d98304ec87f64353c4d5c853
 ```
 
 ### 4. Upgrade Script
 ```bash
-forge script script/poc-uups-proxy/UpgradeScript.s.sol:UpgradeScript --rpc-url http://localhost:8545 --broadcast -vvvv
+forge script script/MRToken.s.sol:UpgradeScript --rpc-url http://localhost:8545 --broadcast -vvvv
 ```
 
 # Interact with proxy
 ```bash
-cast call 0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0 "REWARD_AMOUNT()" --rpc-url http://127.0.0.1:8545
+cast call 0xa513e6e4b8f2a923d98304ec87f64353c4d5c853 "version()" --rpc-url http://127.0.0.1:8545
 ```
 
 ## Testing on Sepolia (Testnet)
