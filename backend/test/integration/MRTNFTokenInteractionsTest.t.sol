@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {DeployScript, UpgradeScript} from "../../script/MRTNFTokenInteractions.s.sol";
 import {MRTNFTokenV1} from "../../src/MRTNFToken/MRTNFTokenV1.sol";
 import {MRTNFTokenV2} from "../../src/MRTNFToken/MRTNFTokenV2.sol";
@@ -25,7 +25,7 @@ contract MRTNFTokenInteractionsTest is Test {
         
         MRTNFTokenV1 instance = MRTNFTokenV1(result.proxyAddress);
         assertEq(instance.version(), 1, "Version should be 1");
-        assertEq(instance.MAX_SUPPLY(), 10000, "MAX_SUPPLY should be 10000");
+        assertEq(instance.i_maxSupply(), 10000, "i_maxSupply should be 10000");
         
         proxyAddress = result.proxyAddress;
     }
@@ -46,7 +46,7 @@ contract MRTNFTokenInteractionsTest is Test {
         MRTNFTokenV2 instance = MRTNFTokenV2(proxyAddress);
         assertEq(instance.version(), 2, "Version should be 2");
         assertEq(instance.s_addStorageVarTest(), 4, "New storage variable should be set");
-        assertEq(instance.MAX_SUPPLY(), 10000, "MAX_SUPPLY should persist");
+        assertEq(instance.i_maxSupply(), 10000, "i_maxSupply should persist");
     }
 
     function test_deployAndUpgradeMRTNFToken() public {
@@ -55,7 +55,7 @@ contract MRTNFTokenInteractionsTest is Test {
         
         MRTNFTokenV1 instanceV1 = MRTNFTokenV1(deployResult.proxyAddress);
         assertEq(instanceV1.version(), 1, "Initial version should be 1");
-        assertEq(instanceV1.MAX_SUPPLY(), 10000, "Initial MAX_SUPPLY should be 10000");
+        assertEq(instanceV1.i_maxSupply(), 10000, "Initial i_maxSupply should be 10000");
         
         UpgradeScript upgradeScript = new UpgradeScript();
         UpgradeScript.UpgradeReturn memory upgradeResult = upgradeScript.run(deployResult.proxyAddress);
@@ -65,7 +65,7 @@ contract MRTNFTokenInteractionsTest is Test {
         MRTNFTokenV2 instanceV2 = MRTNFTokenV2(deployResult.proxyAddress);
         assertEq(instanceV2.version(), 2, "Version should be 2 after upgrade");
         assertEq(instanceV2.s_addStorageVarTest(), 4, "New storage variable should be set");
-        assertEq(instanceV2.MAX_SUPPLY(), 10000, "MAX_SUPPLY should persist after upgrade");
+        assertEq(instanceV2.i_maxSupply(), 10000, "i_maxSupply should persist after upgrade");
     }
 }
 

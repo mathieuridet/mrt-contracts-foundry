@@ -55,9 +55,9 @@ contract DeployScript is Script {
         console.log("version() returns:", version);
         require(version == 1, "MRTNFTokenV1 version should return 1");
         
-        uint256 maxSupplyValue = instance.MAX_SUPPLY();
-        console.log("MAX_SUPPLY:", maxSupplyValue);
-        require(maxSupplyValue == maxSupply, "MRTNFTokenV1 MAX_SUPPLY should match");
+        uint256 maxSupplyValue = instance.i_maxSupply();
+        console.log("i_maxSupply:", maxSupplyValue);
+        require(maxSupplyValue == maxSupply, "MRTNFTokenV1 i_maxSupply should match");
         
         vm.stopBroadcast();
         
@@ -92,9 +92,9 @@ contract UpgradeScript is Script {
         
         // Get the max supply and mint price from the proxy
         MRTNFTokenV1 instanceV1 = MRTNFTokenV1(proxyAddress);
-        uint256 maxSupply = instanceV1.MAX_SUPPLY();
-        uint256 mintPrice = instanceV1.MINT_PRICE();
-        console.log("MAX_SUPPLY:", maxSupply);
+        uint256 maxSupply = instanceV1.i_maxSupply();
+        uint256 mintPrice = instanceV1.i_mintPrice();
+        console.log("i_maxSupply:", maxSupply);
         console.log("MINT_PRICE:", mintPrice);
         
         // Step 4: Deploy MRTNFTokenV2 implementation
@@ -124,9 +124,9 @@ contract UpgradeScript is Script {
         console.log("s_addStorageVarTest:", storageVar);
         require(storageVar == 4, "MRTNFTokenV2 s_addStorageVarTest should be 4");
         
-        // Verify storage persisted (MAX_SUPPLY should still be there)
-        uint256 maxSupplyValue = instance.MAX_SUPPLY();
-        console.log("MAX_SUPPLY (should persist):", maxSupplyValue);
+        // Verify storage persisted (i_maxSupply should still be there)
+        uint256 maxSupplyValue = instance.i_maxSupply();
+        console.log("i_maxSupply (should persist):", maxSupplyValue);
         
         console.log("\n=== SUCCESS: Proxy address unchanged, implementation upgraded! ===");
         console.log("Proxy Address:", proxyAddress);

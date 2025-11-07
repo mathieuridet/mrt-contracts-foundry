@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {DeployScript, UpgradeScript} from "../../script/MRTokenInteractions.s.sol";
 import {MRTokenV1} from "../../src/MRToken/MRTokenV1.sol";
 import {MRTokenV2} from "../../src/MRToken/MRTokenV2.sol";

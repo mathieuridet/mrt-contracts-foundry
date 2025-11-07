@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {DeployScript, UpgradeScript} from "../../script/StakingVaultInteractions.s.sol";
 import {StakingVaultV1} from "../../src/StakingVault/StakingVaultV1.sol";
 import {StakingVaultV2} from "../../src/StakingVault/StakingVaultV2.sol";

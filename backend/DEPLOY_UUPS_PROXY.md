@@ -38,7 +38,7 @@ forge script script/MRToken.s.sol:UpgradeScript --rpc-url http://localhost:8545 
 
 # Interact with proxy
 ```bash
-cast call 0xfcc25e6d7ab3f9de86a32ddaab6d707ab5ce5a3c "rewardRate()" --rpc-url http://127.0.0.1:8545
+cast call 0x063c105df2f6bf6604ef79c9d07e0ed05603ae03 "s_rount()" --rpc-url http://127.0.0.1:8545
 ```
 
 ## Testing on Sepolia (Testnet)

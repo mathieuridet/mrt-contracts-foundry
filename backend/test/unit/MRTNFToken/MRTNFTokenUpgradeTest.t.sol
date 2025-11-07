@@ -7,8 +7,8 @@ import {MRTNFTokenV1} from "src/MRTNFToken/MRTNFTokenV1.sol";
 import {MRTNFTokenV2} from "src/MRTNFToken/MRTNFTokenV2.sol";
 
 contract MRTNFTokenUpgradeTest is Test {
-    address public owner = address(0x1);
-    address public user = address(0x2);
+    address public owner;
+    address public user;
     address public proxyAddress;
 
     MRTNFTokenV1 public nftTokenV1;
@@ -21,6 +21,9 @@ contract MRTNFTokenUpgradeTest is Test {
     uint96 constant ROYALTY_BPS = 500; // 5%
 
     function setUp() public {
+        owner = makeAddr("owner");
+        user = makeAddr("user");
+
         // Deploy implementations
         nftTokenV1 = new MRTNFTokenV1(MAX_SUPPLY, MINT_PRICE);
         nftTokenV2 = new MRTNFTokenV2(MAX_SUPPLY, MINT_PRICE);
@@ -49,9 +52,9 @@ contract MRTNFTokenUpgradeTest is Test {
         assertEq(instance.version(), 1);
         console.log("MRTNFTokenV1 version:", instance.version());
         
-        // Verify MAX_SUPPLY
-        assertEq(instance.MAX_SUPPLY(), MAX_SUPPLY);
-        console.log("MRTNFTokenV1 MAX_SUPPLY:", instance.MAX_SUPPLY());
+        // Verify i_maxSupply
+        assertEq(instance.i_maxSupply(), MAX_SUPPLY);
+        console.log("MRTNFTokenV1 i_maxSupply:", instance.i_maxSupply());
         
         // Upgrade to MRTNFTokenV2 as owner
         vm.prank(owner);
@@ -80,8 +83,8 @@ contract MRTNFTokenUpgradeTest is Test {
         console.log("MRTNFTokenV2 s_addStorageVarTest:", instanceB.s_addStorageVarTest());
         
         // Verify storage persisted (MAX_SUPPLY should still be there)
-        assertEq(instanceB.MAX_SUPPLY(), MAX_SUPPLY);
-        console.log("MRTNFTokenV2 MAX_SUPPLY (should persist):", instanceB.MAX_SUPPLY());
+        assertEq(instanceB.i_maxSupply(), MAX_SUPPLY);
+        console.log("MRTNFTokenV2 i_maxSupply (should persist):", instanceB.i_maxSupply());
     }
     
     function test_OnlyOwnerCanUpgrade() public {
@@ -127,8 +130,8 @@ contract MRTNFTokenUpgradeTest is Test {
         MRTNFTokenV2 instanceB = MRTNFTokenV2(proxyAddress);
         assertEq(instanceB.totalSupply(), 1);
         assertEq(instanceB.ownerOf(1), user);
-        assertEq(instanceB.MAX_SUPPLY(), MAX_SUPPLY);
-        assertEq(instanceB.MINT_PRICE(), MINT_PRICE);
+        assertEq(instanceB.i_maxSupply(), MAX_SUPPLY);
+        assertEq(instanceB.i_mintPrice(), MINT_PRICE);
     }
 }
 

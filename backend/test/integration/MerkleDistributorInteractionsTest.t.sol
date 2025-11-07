@@ -1,11 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {DeployScript, UpgradeScript} from "script/MerkleDistributorInteractions.s.sol";
 import {MerkleDistributorV1} from "src/MerkleDistributor/MerkleDistributorV1.sol";
 import {MerkleDistributorV2} from "src/MerkleDistributor/MerkleDistributorV2.sol";
-import {UUPSProxy} from "src/UUPSProxy.sol";
 
 contract MerkleDistributorInteractionsTest is Test {
     address public deployer = address(0x1);

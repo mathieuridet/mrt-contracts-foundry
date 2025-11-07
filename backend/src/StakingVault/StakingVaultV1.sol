@@ -7,7 +7,6 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {UUPSProxy} from "src/UUPSProxy.sol";
 
 /// @title StakingVault V1
 /// @author Mathieu Ridet
@@ -29,6 +28,7 @@ contract StakingVaultV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, U
 
     // State variables
     /// @notice ERC20 token used for both staking and rewards
+    // solhint-disable-next-line screaming-snake-case-immutable
     IERC20 public immutable i_stakingToken;
 
     /// @notice Reward rate in tokens per second

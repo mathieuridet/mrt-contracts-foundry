@@ -10,35 +10,69 @@ import {MRTNFTokenV1} from "src/MRTNFToken/MRTNFTokenV1.sol";
 import {UUPSProxy} from "src/UUPSProxy.sol";
 
 contract DeployAll is Script, CodeConstants {
-    function run() public {
+    struct DeployAllReturn {
+        address mrTokenProxyAddress;
+        address merkleDistributorProxyAddress;
+        address stakingVaultProxyAddress;
+        address mrtnfTokenProxyAddress;
+    }
+
+    function run() public returns (DeployAllReturn memory) {
         uint256 pk = vm.envUint("PRIVATE_KEY");
         address owner = vm.addr(pk);
 
         vm.startBroadcast(pk);
-        
-        // 1. Deploy MRToken
-        MRTokenV1 mrToken = new MRTokenV1();
-        bytes memory mrTokenInitData = abi.encodeCall(MRTokenV1.initialize, (owner));
-        UUPSProxy mrTokenProxy = new UUPSProxy(address(mrToken), mrTokenInitData);
 
-        // 2. Deploy MerkleDistributor
-        MerkleDistributorV1 merkleDistributor = new MerkleDistributorV1(mrToken, REWARD_AMOUNT);
-        bytes memory mdInitData = abi.encodeCall(MerkleDistributorV1.initialize, (owner));
-        UUPSProxy mdProxy = new UUPSProxy(address(merkleDistributor), mdInitData);
+        address mrTokenProxyAddress;
+        address merkleDistributorProxyAddress;
+        address stakingVaultProxyAddress;
+        address mrtnfTokenProxyAddress;
 
-        // 3. Deploy StakingVault
-        StakingVaultV1 stakingVault = new StakingVaultV1(mrToken);
-        bytes memory svInitData = abi.encodeCall(StakingVaultV1.initialize, (owner, REWARD_RATE));
-        UUPSProxy svProxy = new UUPSProxy(address(stakingVault), svInitData);
+        MRTokenV1 mrToken;
+        MerkleDistributorV1 merkleDistributor;
+        StakingVaultV1 stakingVault;
 
-        // 4. Deploy MRTNFToken
-        MRTNFTokenV1 nft = new MRTNFTokenV1(CAP, MINT_PRICE);
-        bytes memory nftInitData = abi.encodeCall(
-            MRTNFTokenV1.initialize,
-            (owner, BASE_URI, owner, ROYALTY_BPS)
-        ); // 5% royalty to owner/deployer
-        UUPSProxy nftProxy = new UUPSProxy(address(nft), nftInitData);
+        {
+            MRTokenV1 implementation = new MRTokenV1();
+            bytes memory initData = abi.encodeCall(MRTokenV1.initialize, (owner));
+            UUPSProxy proxy = new UUPSProxy(address(implementation), initData);
+            mrTokenProxyAddress = address(proxy);
+            mrToken = MRTokenV1(mrTokenProxyAddress);
+        }
+
+        {
+            MerkleDistributorV1 implementation = new MerkleDistributorV1(mrToken, REWARD_AMOUNT);
+            bytes memory initData = abi.encodeCall(MerkleDistributorV1.initialize, (owner));
+            UUPSProxy proxy = new UUPSProxy(address(implementation), initData);
+            merkleDistributorProxyAddress = address(proxy);
+            merkleDistributor = MerkleDistributorV1(merkleDistributorProxyAddress);
+        }
+
+        {
+            StakingVaultV1 implementation = new StakingVaultV1(mrToken);
+            bytes memory initData = abi.encodeCall(StakingVaultV1.initialize, (owner, REWARD_RATE));
+            UUPSProxy proxy = new UUPSProxy(address(implementation), initData);
+            stakingVaultProxyAddress = address(proxy);
+            stakingVault = StakingVaultV1(stakingVaultProxyAddress);
+        }
+
+        {
+            MRTNFTokenV1 implementation = new MRTNFTokenV1(CAP, MINT_PRICE);
+            bytes memory initData = abi.encodeCall(
+                MRTNFTokenV1.initialize,
+                (owner, BASE_URI, owner, ROYALTY_BPS)
+            ); // 5% royalty to owner/deployer
+            UUPSProxy proxy = new UUPSProxy(address(implementation), initData);
+            mrtnfTokenProxyAddress = address(proxy);
+        }
 
         vm.stopBroadcast();
+
+        return DeployAllReturn({
+            mrTokenProxyAddress: mrTokenProxyAddress,
+            merkleDistributorProxyAddress: merkleDistributorProxyAddress,
+            stakingVaultProxyAddress: stakingVaultProxyAddress,
+            mrtnfTokenProxyAddress: mrtnfTokenProxyAddress
+        });
     }
 }

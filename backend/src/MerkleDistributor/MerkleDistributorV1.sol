@@ -6,7 +6,6 @@ import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProo
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {UUPSProxy} from "src/UUPSProxy.sol";
 
 /// @title MerkleDistributor V1
 /// @author Mathieu Ridet
@@ -37,15 +36,19 @@ contract MerkleDistributorV1 is Initializable, OwnableUpgradeable, UUPSUpgradeab
 
     // State variables
     /// @notice ERC20 token being distributed
+    // solhint-disable-next-line screaming-snake-case-immutable
     IERC20 public immutable i_token;
 
     /// @notice Fixed reward amount per claim
+    // solhint-disable-next-line screaming-snake-case-immutable
     uint256 public immutable i_rewardAmount;
 
     /// @notice Current Merkle root for claim verification
+    // solhint-disable-next-line mixed-case-variable
     bytes32 public s_merkleRoot;
 
     /// @notice Current distribution round
+    // solhint-disable-next-line mixed-case-variable
     uint64 public s_round;
 
     /// @notice Mapping of round => address => claimed status
