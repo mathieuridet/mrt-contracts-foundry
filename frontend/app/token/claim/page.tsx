@@ -12,6 +12,7 @@ import type { Abi } from "viem";
 import {
   formatUnits,
 } from "viem";
+import { sepolia, arbitrumSepolia, baseSepolia, zkSyncSepoliaTestnet } from "viem/chains";
 import DistributorAbi from "@/abi/MerkleDistributor.json";
 import { BaseError } from "viem";
 import { EmptyState, Spinner, Stat, Banner, SkeletonBlock } from "@/app/components/Helpers";
@@ -58,7 +59,22 @@ export default function ClaimPage() {
   const chainConfig = getChainConfig(chainId);
   const distributorAddress = chainConfig.contracts.distributor;
   const tokenAddress = chainConfig.contracts.token;
-  const claimsUrl = chainConfig.contracts.claimsUrl ?? process.env.NEXT_PUBLIC_CLAIMS_URL ?? "/claims/current.json";
+  // TODO : make this dynamic based on the chain
+  const claimsEnvByChain: Record<number, string | undefined> = {
+    [sepolia.id]: process.env.NEXT_PUBLIC_ETH_SEP_CLAIMS_URL,
+    [arbitrumSepolia.id]: process.env.NEXT_PUBLIC_ARB_SEP_CLAIMS_URL,
+    [baseSepolia.id]: process.env.NEXT_PUBLIC_BASE_SEP_CLAIMS_URL,
+    [zkSyncSepoliaTestnet.id]: process.env.NEXT_PUBLIC_ZKS_SEP_CLAIMS_URL,
+  };
+
+  const defaultClaimsPath = chainConfig.alchemyNetwork
+    ? `/claims/${chainConfig.alchemyNetwork}.json`
+    : `/claims/${chainConfig.id}.json`;
+  const claimsUrl =
+    chainConfig.contracts.claimsUrl ??
+    claimsEnvByChain[chainConfig.id] ??
+    process.env.NEXT_PUBLIC_CLAIMS_URL ??
+    defaultClaimsPath;
 
   const isConfigured = Boolean(distributorAddress && tokenAddress);
   const distributor = (distributorAddress ?? ZERO_ADDRESS) as `0x${string}`;
