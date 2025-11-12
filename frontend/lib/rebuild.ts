@@ -110,7 +110,6 @@ async function rebuildSingleChain(opts: RebuildOptions = {}): Promise<RebuildBat
   });
 
   const rpcUrl = opts.rpcUrl ?? chainConfig.rpcUrl ?? "";
-  console.log("*** rpcUrl", rpcUrl);
   const nft = opts.nft ?? chainConfig.contracts.nft;
   const distributor = opts.distributor ?? chainConfig.contracts.distributor;
   const blocksPerHour = opts.blocksPerHour ?? Number(process.env.BLOCKS_PER_HOUR ?? 300);
@@ -153,14 +152,14 @@ async function rebuildSingleChain(opts: RebuildOptions = {}): Promise<RebuildBat
   let onchainReward: bigint | undefined;
   try {
     console.log("dist", distributorAddress);
-    console.log("*** merkleRoot", dist.merkleRoot());
-    console.log("*** round", dist.round());
-    console.log("*** rewardAmount", dist.rewardAmount());
+    console.log("*** merkleRoot", dist.s_merkleRoot());
+    console.log("*** s_round", dist.s_round());
+    console.log("*** i_rewardAmount", dist.i_rewardAmount());
 
     [onchainRoot, onchainRound, onchainReward] = (await Promise.all([
-      dist.merkleRoot(),
-      dist.round(),
-      dist.rewardAmount(),
+      dist.s_merkleRoot(),
+      dist.s_round(),
+      dist.i_rewardAmount(),
     ])) as [`0x${string}`, bigint, bigint];
   
     console.log("*** onchainRoot", onchainRoot);
