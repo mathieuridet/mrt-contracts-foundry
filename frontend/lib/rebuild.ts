@@ -116,6 +116,7 @@ async function rebuildSingleChain(opts: RebuildOptions = {}): Promise<RebuildBat
   });
 
   const rpcUrl = opts.rpcUrl ?? chainConfig.rpcUrl ?? "";
+  console.log("*** rpcUrl", rpcUrl);
   const nft = opts.nft ?? chainConfig.contracts.nft;
   const distributor = opts.distributor ?? chainConfig.contracts.distributor;
   const blocksPerHour = opts.blocksPerHour ?? Number(process.env.BLOCKS_PER_HOUR ?? 300);
@@ -158,7 +159,10 @@ async function rebuildSingleChain(opts: RebuildOptions = {}): Promise<RebuildBat
   let onchainReward: bigint | undefined;
   try {
     console.log("dist", distributorAddress);
-  
+    console.log("*** merkleRoot", dist.merkleRoot());
+    console.log("*** round", dist.round());
+    console.log("*** rewardAmount", dist.rewardAmount());
+    
     [onchainRoot, onchainRound, onchainReward] = (await Promise.all([
       dist.merkleRoot(),
       dist.round(),
@@ -191,7 +195,6 @@ async function rebuildSingleChain(opts: RebuildOptions = {}): Promise<RebuildBat
   const minters = new Set<string>();
   for (const log of logs) {
     const to = ethers.getAddress(("0x" + log.topics[2].slice(26)) as `0x${string}`);
-    //minters.add(to.toLowerCase());
     minters.add(to);
   }
 
