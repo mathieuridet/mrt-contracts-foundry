@@ -151,21 +151,11 @@ async function rebuildSingleChain(opts: RebuildOptions = {}): Promise<RebuildBat
   let onchainRound: bigint | undefined;
   let onchainReward: bigint | undefined;
   try {
-    console.log("dist", distributorAddress);
-    console.log("*** merkleRoot", dist.s_merkleRoot());
-    console.log("*** s_round", dist.s_round());
-    console.log("*** i_rewardAmount", dist.i_rewardAmount());
-
     [onchainRoot, onchainRound, onchainReward] = (await Promise.all([
       dist.s_merkleRoot(),
       dist.s_round(),
       dist.i_rewardAmount(),
     ])) as [`0x${string}`, bigint, bigint];
-  
-    console.log("*** onchainRoot", onchainRoot);
-    console.log("*** onchainRound", onchainRound?.toString());
-    console.log("*** onchainReward", onchainReward?.toString());
-  
   } catch (err) {
     console.error("Error reading distributor state", {
       distributorAddress,

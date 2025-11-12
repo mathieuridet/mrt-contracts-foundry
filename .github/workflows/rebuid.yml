@@ -46,12 +46,12 @@ jobs:
             exit 22
           fi
 
-      - name: Download latest current.json from Blob (per-chain)
+      - name: Download latest json from Blob (per-chain)
         run: |
           set -euo pipefail
-          FILENAME="${{ matrix.chain }}-sepolia-current.json"
+          FILENAME="${{ matrix.chain }}-sepolia.json"
           echo "Fetching $FILENAME from Blob..."
-          curl -sS "https://1knr7tukuhrzgbyl.public.blob.vercel-storage.com/claims/$FILENAME" -o current.json
+          curl -sSf "https://1knr7tukuhrzgbyl.public.blob.vercel-storage.com/claims/$FILENAME" -o current.json
           echo "::notice title=Blob $FILENAME::$(cat current.json)"
 
       - name: Extract publish params
@@ -59,15 +59,19 @@ jobs:
         run: |
           set -euo pipefail
           root=$(jq -r '.root' current.json)
-          round=$(jq -r '.round | tonumber' current.json)
+          round=$(jq -r '(.round | tonumber?) // 0' current.json)
           claims=$(jq -r '.claims | length' current.json)
+
+          # Normalize null/empty root → 0x0
           if [[ -z "$root" || "$root" == "null" ]]; then
             root="0x0000000000000000000000000000000000000000000000000000000000000000"
           fi
+
           echo "Chain: ${{ matrix.chain }}"
           echo "root   = $root"
           echo "round  = $round"
           echo "claims = $claims"
+
           echo "root=$root"           >> "$GITHUB_OUTPUT"
           echo "round=$round"         >> "$GITHUB_OUTPUT"
           echo "claims_count=$claims" >> "$GITHUB_OUTPUT"
