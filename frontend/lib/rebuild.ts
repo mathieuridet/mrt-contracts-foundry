@@ -175,6 +175,12 @@ async function rebuildSingleChain(opts: RebuildOptions = {}): Promise<RebuildBat
   const fromBlock = Math.max(0, toBlock - blocksPerHour);
   const logs = await getLogsInChunks(provider, nftAddress, fromBlock, toBlock, [TRANSFER_SIG, ZERO32]);
 
+  console.log("[builder] chain=eth-sepolia");
+  console.log("[builder] fromBlock", fromBlock);
+  console.log("[builder] toBlock", toBlock);
+  console.log("[builder] nftAddress", nftAddress);
+  console.log("[builder] logs.length", logs.length);
+
   const minters = new Set<string>();
   for (const log of logs) {
     const to = ethers.getAddress(("0x" + log.topics[2].slice(26)) as `0x${string}`);
