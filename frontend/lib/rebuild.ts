@@ -66,6 +66,7 @@ function leafHash(account: `0x${string}`, amount: bigint, round: bigint) {
     ethers.solidityPacked(["address", "uint256", "uint64"], [account, amount, round])
   );
 }
+
 function toBuf(hex: string) {
   return Buffer.from(hex.slice(2), "hex");
 }

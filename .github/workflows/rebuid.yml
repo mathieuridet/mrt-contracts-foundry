@@ -16,7 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        chain: [eth, arb, bas, zks]
+        #chain: [eth, arb, bas, zks]
+        chain: [eth]
 
     steps:
       - name: Timestamp (UTC)
